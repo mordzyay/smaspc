@@ -70,7 +70,7 @@ function deepcopy(orig)
     return copy
 end
 function drawTile(t, x, y, flipx, flipy)
-	love.graphics.draw(t > 255 and img_tilemap or img_sprmap, tilequads[t], x+(flipx and 8 or 0), y+(flipy and 8 or 0), 0, flipx and -1 or 1, flipy and -1 or 1)
+	love.graphics.draw(t > 255 and img_sprmap or img_tilemap, tilequads[t], x+(flipx and 8 or 0), y+(flipy and 8 or 0), 0, flipx and -1 or 1, flipy and -1 or 1)
 end
 function drawSprite(sprt, x, y, flipx, flipy)
     local minx, maxx, miny, maxy = math.huge, -math.huge, math.huge, -math.huge
@@ -97,6 +97,14 @@ function drawSprite(sprt, x, y, flipx, flipy)
         end
 
         drawTile(tile, x + ox, y + oy, tflipx, tflipy)
+    end
+end
+
+local alphabet = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+function renderText(x, y, text)
+    for i=1,string.len(text) do
+        local l = string.sub(text, i, i)
+        local ti = table.find()
     end
 end
 
@@ -159,7 +167,16 @@ end
 function love.load()
 	min_dt = 1/60
 	next_time = love.timer.getTime()
-	img_tilemap, img_sprmap = loadCHR("Super Mario Bros. (World).nes")
+
+    love.filesystem.setIdentity("smaspc")
+    cwd = love.filesystem.getSaveDirectory()
+
+    exists = love.filesystem.getInfo(cwd.."/Super Mario Bros. (World).nes")
+    if exists then
+        img_sprmap, img_tilemap = loadCHR(cwd.."/Super Mario Bros. (World).nes")
+    else
+        return
+    end
 	
 	love.graphics.setBackgroundColor(118/255,134/255,1,1)
 
