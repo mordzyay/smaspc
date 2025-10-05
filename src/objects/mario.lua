@@ -42,6 +42,8 @@ function m:New(o)
 	o["jumpstate"] = 1
 	o["midairaccel"] = 0.0556640625
 	o["runtimer"] = 0 --becomes 10 since mario keeps running for 10 frames
+
+	o["jumpgravity"] = true --can we change the gravity by holding jump when going up?
 	
 	o["deceling"] = false
 	o["powerstate"] = 0 --0: small, 1: big, 2: fire and 3+ are extras i can add or others can add
@@ -50,6 +52,10 @@ function m:New(o)
     self.__index = self
 
     return o
+end
+
+function m:kill()
+	resetlevel()
 end
 
 function m:remove()
@@ -260,7 +266,7 @@ function m:update(dt)
 		defphysics.jumpstates[self.jumpstate],
 	}
 	local gravity = self.physics[2][2]
-	if Game.input[5] > 0 and self.ys < 0 then
+	if self.jumpgravity == true and (Game.input[5] > 0 and self.ys < 0) then
 		gravity = self.physics[2][1]
 	end
 	if Game.input[6] > 0 then
@@ -269,7 +275,7 @@ function m:update(dt)
 		self.runtimer = math.clamp(self.runtimer - 1, 0, 10)
 	end
 	self.ys = self.ys + gravity
-	if self.onground then self:walk() else self:airwalk() end
+	if self.onground then self:walk(); self.jumpgravity = true; else self:airwalk() end
 	if Game.input[5] == 1 and self.onground then
 		self:jump()
 	end
@@ -300,6 +306,7 @@ function m:draw()
 			love.graphics.rectangle("fill", self.x+v[1], self.y+v[2], 1, 1)
 		end
 	end
+	love.graphics.setColor(1,1,1)
 end
 
 return m

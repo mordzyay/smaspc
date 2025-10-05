@@ -34,6 +34,8 @@ function m:New(o)
 	o["ys"] = 0
 	o["hascollision"] = true
 	o["state"] = "alive"
+	o["shelled"] = false
+	o["kicked"] = false
 	o["frame"] = 0
 
     setmetatable(o, self)
@@ -156,18 +158,45 @@ function m:update(dt)
 		local docol = collisionpos[self.xs < 0 and 4 or 5]
 		local shouldreverse = Game.world:getOverlapping({self, docol[1]+self.x, docol[2]+self.y})
 		if shouldreverse then
-			self.xs = -self.xs
+			if self.shelled then
+				shouldreverse:kill("shot")
+			else
+				self.xs = -self.xs
+			end
 		end
 
 		local docol = collisionpos[1]
 		local getkill = Game.world:collidingWithPlayers({self, docol[1]+self.x, docol[2]+self.y})
 		if getkill then
-			if getkill.onground == false then
-				Game.world.player.ys = -4
-				Game.world.player.jumpgravity = false
-				self:kill("stomp")
+			if self.shelled then
+				if getkill.onground == false then
+					getkill.ys = -4
+					getkill.jumpgravity = false
+					--self.shelled = true
+					if self.kicked then
+						self.xs = 0
+						self.kicked = false
+					else
+						self.xs = getkill.x < self.x and 4 or -4
+						self.kicked = true
+					end
+				else
+					if self.kicked then
+						getkill:kill("normal")
+					elseif getkill.ys > -1 then
+						self.xs = getkill.x < self.x and 4 or -4
+						self.kicked = true
+					end
+				end
 			else
-				getkill:kill("normal")
+				if getkill.onground == false then
+					getkill.ys = -4
+					getkill.jumpgravity = false
+					self.shelled = true
+					self.xs = 0
+				else
+					getkill:kill("normal")
+				end
 			end
 		end
 	end
@@ -176,14 +205,6 @@ function m:update(dt)
 		self.ys = self.ys + gravity
     	self.x = self.x + self.xs
     	self.y = self.y + self.ys
-		self.hascollision = false
-	end
-	if self.state == "stomp" then
-		self.frame = self.frame + 1
-		if self.frame > 24 then
-			self:remove()
-			return
-		end
 		self.hascollision = false
 	end
 	if self.y > (Game.world.height*16)+(self.h*4) then
@@ -204,13 +225,14 @@ function m:draw()
 	love.graphics.setShader(nesShader)
 	sendPalette(newColors)
 	if self.state == "dead" then
-		drawSprite(sprites.goomba[1], self.x, self.y, false, true)
-	end
-	if self.state == "stomp" then
-		drawSprite(sprites.goomba[2], self.x, self.y, false, false)
+		drawSprite(sprites.koopa[3], self.x, self.y, false, false)
 	end
 	if self.state == "alive" then
-		drawSprite(sprites.goomba[1], self.x, self.y, self.frame > 12 and true or false, false)
+		if self.shelled then
+			drawSprite(sprites.koopa[3], self.x, self.y+2, false, true)
+		else
+			drawSprite(self.frame > 12 and sprites.koopa[2] or sprites.koopa[1], self.x, self.y, self.xs < 0 and true or false, false)
+		end
 	end
 	love.graphics.setShader()
 end

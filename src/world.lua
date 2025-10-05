@@ -20,6 +20,27 @@ function world:init(width, height)
     self.objects = {}
 end
 
+function world:getOverlapping(from)
+    local obj, px, py = unpack(from)
+    local iscolliding = nil
+    for _, v in pairs(self.objects) do
+        if (v ~= obj) and (v.hascollision) then
+            --print("hi im at "..tostring(v.x))
+            if col_pointinrect(px, py, v.x, v.y, v.w, v.h) then
+                iscolliding = v
+            end 
+        end
+    end
+    return iscolliding
+end
+
+function world:collidingWithPlayers(from)
+    local obj, px, py = unpack(from)
+    local mar = Game.world.player
+    local iscolliding = col_pointinrect(px, py, mar.x, mar.y, mar.w, mar.h) and mar or nil
+    return iscolliding
+end
+
 function world:getTile(x, y)
 	x = math.floor(x/16)+1
 	y = math.floor(y/16)+1
@@ -44,7 +65,11 @@ end
 function world:update(dt)
     self.player:update(dt)
 	for i, v in pairs(self.objects) do
-		v:update(dt)
+        if v._remove then
+            table.remove(self.objects, i)
+        else
+            v:update(dt)
+        end
 	end
 end
 
